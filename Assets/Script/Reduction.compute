@@ -1,0 +1,33 @@
+#pragma kernel Clear_Keys
+#pragma kernel Compute_Keys
+
+#define NUMBERS_OF_KEYS 8
+RWByteAddressBuffer Keys;
+
+[numthreads(NUMBERS_OF_KEYS / 4, 1, 1)]
+void Clear_Keys(uint3 id : SV_DispatchThreadID)
+{
+    Keys.Store4(4 * 4 * id.x, (uint4)0);
+}
+
+#define THREAD_SIZE 8
+groupshared uint g_Keys[NUMBERS_OF_KEYS];
+[numthreads(THREAD_SIZE, THREAD_SIZE, 1)]
+void Compute_Keys(uint groupIndex : SV_GroupIndex, uint3 id : SV_DispatchThreadID)
+{
+    if (groupIndex < NUMBERS_OF_KEYS)
+    {
+        g_Keys[groupIndex] = 0;
+    }
+    GroupMemoryBarrierWithGroupSync();
+
+    InterlockedAdd(g_Keys[0], 1); //From sampling
+
+    GroupMemoryBarrierWithGroupSync();
+
+    if (groupIndex < NUMBERS_OF_KEYS)
+    {
+        uint previous;
+        Keys.InterlockedAdd(groupIndex, g_Keys[groupIndex], previous);
+    }
+}
