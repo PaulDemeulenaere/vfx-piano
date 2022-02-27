@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: A
+  m_Name: C2
   m_Shader: {fileID: -6465566751694194690, guid: b424b0a0595c1144480487c6e85d1ca6, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
@@ -100,7 +100,7 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Emissive: 4.1542973e-22
+    - _Emissive: 0.10347685
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -119,8 +119,8 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.34574473, g: 0, b: 0.7264151, a: 1}
-    - _Color: {r: 0.3457447, g: 0, b: 0.7264151, a: 1}
+    - _BaseColor: {r: 0.06624317, g: 0, b: 1, a: 1}
+    - _Color: {r: 0.06624315, g: 0, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

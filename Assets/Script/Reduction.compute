@@ -3,6 +3,7 @@
 
 #define NUMBERS_OF_KEYS 8
 RWByteAddressBuffer Keys;
+Texture2D<float> Capture;
 
 [numthreads(NUMBERS_OF_KEYS / 4, 1, 1)]
 void Clear_Keys(uint3 id : SV_DispatchThreadID)
@@ -13,21 +14,26 @@ void Clear_Keys(uint3 id : SV_DispatchThreadID)
 #define THREAD_SIZE 8
 groupshared uint g_Keys[NUMBERS_OF_KEYS];
 [numthreads(THREAD_SIZE, THREAD_SIZE, 1)]
-void Compute_Keys(uint groupIndex : SV_GroupIndex, uint3 id : SV_DispatchThreadID)
+void Compute_Keys(uint2 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID)
 {
-    if (groupIndex < NUMBERS_OF_KEYS)
+    uint localGroupIndex = groupThreadId.y * THREAD_SIZE + groupThreadId.x;
+    if (localGroupIndex < NUMBERS_OF_KEYS)
     {
-        g_Keys[groupIndex] = 0;
+        g_Keys[localGroupIndex] = 0;
     }
     GroupMemoryBarrierWithGroupSync();
 
-    InterlockedAdd(g_Keys[0], 1); //From sampling
+    float readCapture = Capture.Load(dispatchThreadId);
+    uint currentKey = (dispatchThreadId.x / (256 / NUMBERS_OF_KEYS));
+
+    if (readCapture != 0.0f)
+        InterlockedAdd(g_Keys[currentKey], 1);
 
     GroupMemoryBarrierWithGroupSync();
 
-    if (groupIndex < NUMBERS_OF_KEYS)
+    if (localGroupIndex < NUMBERS_OF_KEYS)
     {
         uint previous;
-        Keys.InterlockedAdd(groupIndex, g_Keys[groupIndex], previous);
+        Keys.InterlockedAdd(localGroupIndex * 4, g_Keys[localGroupIndex], previous);
     }
 }
