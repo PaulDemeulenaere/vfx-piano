@@ -46,9 +46,9 @@ class AudioUpdater
 {
     private AudioSource[] m_Sources;
 
-    public static float[] ComputeSine(float len, float freq, int samplesPerSec)
+    public static float[] ComputeSine(float len, float freq, uint samplesPerSec)
     {
-        var samples = (int)(samplesPerSec * len);
+        var samples = (uint)(samplesPerSec * len);
         var ret = new float[samples];
 
         for (int i = 0; i < samples; ++i)
@@ -62,7 +62,7 @@ class AudioUpdater
         m_Sources = new AudioSource[keyCount];
 
         float baseA = 440;
-
+        uint bitrate = 44100;
         for (int key = 0; key < keyCount; ++key)
         {
             var gameObject = new GameObject("Key_" + key);
@@ -70,8 +70,8 @@ class AudioUpdater
 
             var audioSource = gameObject.AddComponent<AudioSource>();
 
-            var pcm = ComputeSine(5.0f, baseA * Mathf.Pow(2.0f, key/12.0f), 44100);
-            var baseKey = AudioClip.Create("Key_" + key, pcm.Length, 1, 44100, false);
+            var pcm = ComputeSine(5.0f, baseA * Mathf.Pow(2.0f, key/12.0f), bitrate);
+            var baseKey = AudioClip.Create("Key_" + key, pcm.Length, 1, (int)bitrate, false);
             baseKey.SetData(pcm, 0);
 
             audioSource.clip = baseKey;
@@ -114,12 +114,13 @@ class KeyReader : MonoBehaviour
     private GraphicsBuffer m_Keys;
     private static readonly int s_KeysID = Shader.PropertyToID("Keys");
     private static readonly int s_CaptureID = Shader.PropertyToID("Capture");
+    private static readonly int s_Capture_WidthID = Shader.PropertyToID("Capture_Width");
 
     private static readonly int s_Keys_Count = 8;
 
     private bool[] m_KeyPressed;
 
-    //Modifier
+    //Modifiers
     private MaterialUpdater m_MaterialUpdater;
     private AudioUpdater m_AudioUpdater;
 
@@ -145,7 +146,7 @@ class KeyReader : MonoBehaviour
 
         Reduction.SetBuffer(m_Kernel_Reduce, s_KeysID, m_Keys);
         Reduction.SetTexture(m_Kernel_Reduce, s_CaptureID, Capture);
-
+        Reduction.SetInt( s_Capture_WidthID, Capture.width);
         //Assuming Capture.width/height is a multiple of s_ThreadGroupSize
         Reduction.Dispatch(m_Kernel_Reduce, Capture.width / s_ThreadGroupSize, Capture.height / s_ThreadGroupSize, 1);
         AsyncGPUReadback.Request(m_Keys, OnCompleteReadback);

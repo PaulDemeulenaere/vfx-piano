@@ -4,6 +4,7 @@
 #define NUMBERS_OF_KEYS 8
 RWByteAddressBuffer Keys;
 Texture2D<float> Capture;
+int Capture_Width;
 
 [numthreads(NUMBERS_OF_KEYS / 4, 1, 1)]
 void Clear_Keys(uint3 id : SV_DispatchThreadID)
@@ -24,7 +25,7 @@ void Compute_Keys(uint2 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId
     GroupMemoryBarrierWithGroupSync();
 
     float readCapture = Capture.Load(dispatchThreadId);
-    uint currentKey = (dispatchThreadId.x / (256 / NUMBERS_OF_KEYS));
+    uint currentKey = (dispatchThreadId.x / (Capture_Width / NUMBERS_OF_KEYS));
 
     if (readCapture != 0.0f)
         InterlockedAdd(g_Keys[currentKey], 1);
