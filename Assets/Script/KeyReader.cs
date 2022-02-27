@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -41,6 +42,63 @@ class MaterialUpdater
     }
 }
 
+class AudioUpdater
+{
+    private AudioSource[] m_Sources;
+
+    public static float[] ComputeSine(float len, float freq, int samplesPerSec)
+    {
+        var samples = (int)(samplesPerSec * len);
+        var ret = new float[samples];
+
+        for (int i = 0; i < samples; ++i)
+            ret[i] = Mathf.Sin(i / (float)samplesPerSec * freq * Mathf.PI * 2.0f);
+
+        return ret;
+    }
+
+    public AudioUpdater(int keyCount)
+    {
+        m_Sources = new AudioSource[keyCount];
+
+        float baseA = 440;
+
+        for (int key = 0; key < keyCount; ++key)
+        {
+            var gameObject = new GameObject("Key_" + key);
+            gameObject.transform.position = new Vector3(Mathf.Lerp(-4f, 4f, (float) key / keyCount) + 0.5f, 0, 0);
+
+            var audioSource = gameObject.AddComponent<AudioSource>();
+
+            var pcm = ComputeSine(5.0f, baseA * Mathf.Pow(2.0f, key/12.0f), 44100);
+            var baseKey = AudioClip.Create("Key_" + key, pcm.Length, 1, 44100, false);
+            baseKey.SetData(pcm, 0);
+
+            audioSource.clip = baseKey;
+            m_Sources[key] = audioSource;
+        }
+    }
+
+    public void Update(bool[] keyPressed, float dt)
+    {
+        for (int key = 0; key < keyPressed.Length; ++key)
+        {
+            if (keyPressed[key])
+            {
+                m_Sources[key].volume = 1.0f;
+                if (!m_Sources[key].isPlaying)
+                    m_Sources[key].Play();
+            }
+            else
+            {
+                m_Sources[key].volume = Mathf.Lerp(m_Sources[key].volume, 0.0f, dt * 10.0f);
+                if (m_Sources[key].volume < 0.01f)
+                    m_Sources[key].Stop();
+            }
+        }
+    }
+}
+
 class KeyReader : MonoBehaviour
 {
     //Rendering Settings
@@ -49,7 +107,7 @@ class KeyReader : MonoBehaviour
 
     //Other settings
     public Material[] Materials;
-
+    
     private int m_Kernel_Clear;
     private int m_Kernel_Reduce;
 
@@ -63,6 +121,7 @@ class KeyReader : MonoBehaviour
 
     //Modifier
     private MaterialUpdater m_MaterialUpdater;
+    private AudioUpdater m_AudioUpdater;
 
     void Start()
     {
@@ -73,6 +132,7 @@ class KeyReader : MonoBehaviour
         m_Kernel_Reduce = Reduction.FindKernel("Compute_Keys");
 
         m_MaterialUpdater = new MaterialUpdater(Materials);
+        m_AudioUpdater = new AudioUpdater(s_Keys_Count);
     }
 
     private static readonly int s_ThreadGroupSize = 8;
@@ -92,6 +152,7 @@ class KeyReader : MonoBehaviour
 
         //Update Scene
         m_MaterialUpdater.Update(m_KeyPressed, Time.deltaTime);
+        m_AudioUpdater.Update(m_KeyPressed, Time.deltaTime);
     }
 
     void OnCompleteReadback(AsyncGPUReadbackRequest request)
