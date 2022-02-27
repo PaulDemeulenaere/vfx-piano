@@ -31,6 +31,14 @@ class MaterialUpdater
             m_Materials[key].SetFloat(s_EmissiveID, m_EmissiveState[key]);
         }
     }
+
+    public void Reset()
+    {
+        foreach (var mat in m_Materials)
+        {
+            mat.SetFloat(s_EmissiveID, 0.0f);
+        }
+    }
 }
 
 class KeyReader : MonoBehaviour
@@ -110,5 +118,6 @@ class KeyReader : MonoBehaviour
     {
         AsyncGPUReadback.WaitAllRequests();
         m_Keys.Dispose();
+        m_MaterialUpdater.Reset();
     }
 }
