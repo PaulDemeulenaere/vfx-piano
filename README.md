@@ -1,5 +1,5 @@
 # vfx-piano
-
+⚠️ Irrelevant since Unity 6 which allows RWBuffer bindings ⚠️
 ⚠️ Hacky and convoluted workaround to adress the lack of CPU reading from GPU collision ⚠️
 
 It's using a camera to detect particles only based on rendering data (no GPU Event involve at this stage).
